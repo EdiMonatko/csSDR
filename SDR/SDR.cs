@@ -139,7 +139,7 @@ namespace SDR
             WriteToAttr("rf_bandwidth", bw);
             WriteToAttr("sampling_frequency", fs);
             WriteToAttr("rf_port_select", rfPort);
-            WriteToAttr("hardwaregain", 0);
+            WriteToAttr("hardwaregain", -20);
             //Initializing AD9361 IIO streaming channels
             var a = _txDevice.find_channel("voltage0", _tx);
             var b = _txDevice.find_channel("altvoltage0", _tx);
@@ -148,9 +148,9 @@ namespace SDR
             var d = _txDevice.find_channel("altvoltage1", _tx);
 
             a.enable();
-            //b.enable();
+            b.enable();
             c.enable();
-            //d.enable();
+            d.enable();
 
             Console.WriteLine();
             PrintAttrs();
