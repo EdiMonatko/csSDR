@@ -10,7 +10,7 @@ Console.WriteLine("Hello, World!");
 
 var freq = 1e9;
 //create new SDR object
-SDR.SDR sdr = new SDR.SDR("10.100.102.181");
+SDR.SDR sdr = new SDR.SDR("192.168.2.1");
 sdr.Connect();
 
 sdr.SetAd9361Tx(freq);
