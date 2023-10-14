@@ -153,19 +153,20 @@ namespace iio
         /// <remarks>The number of samples written will not exceed the size of the buffer.</remarks>
         public void fill(byte[] array)
         {
-            long length = (long) iio_buffer_end(buf) - (long) iio_buffer_start(buf);
+            long length = (long)iio_buffer_end(buf) - (long)iio_buffer_start(buf);
             if (length > array.Length)
             {
                 length = array.Length;
             }
             Marshal.Copy(array, 0, iio_buffer_start(buf), (int)length);
+            //Marshal.Copy(iio_buffer_start(buf), array, 0, array.Length);
         }
 
         /// <summary>Extract the samples from the <see cref="iio.IOBuffer"/> object.</summary>
         /// <param name="array">A <c>byte</c> array containing the extracted samples.</param>
         public void read(byte[] array)
         {
-            long length = (long) iio_buffer_end(buf) - (long) iio_buffer_start(buf);
+            long length = (long)iio_buffer_end(buf) - (long)iio_buffer_start(buf);
             if (length > array.Length)
             {
                 length = array.Length;
@@ -219,7 +220,7 @@ namespace iio
 
         public long end()
         {
-            return (long) iio_buffer_end(buf);
+            return (long)iio_buffer_end(buf);
         }
     }
 }
