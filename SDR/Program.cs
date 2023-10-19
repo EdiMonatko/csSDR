@@ -4,7 +4,31 @@ using ScottPlot;
 using ScottPlot.WinForms;
 
 Console.WriteLine("Hello, World!");
+var status = false;
+var pluto = new AdalmPluto936X("192.168.2.1");
+status = pluto.Init();
+pluto.ChannelSample = 1e6;
+pluto.TxGain = -70;
+pluto.GainControlMode = "slow_attack";
+pluto.RxGain = 70;
+status = pluto.PlutoTxOn();
+var (I, Q) = pluto.PlutoRxOn();
 
+var plt = new Plot();
+var spectrum = CalculateIQData.CreateSpectrum(I.ToArray(), Q.ToArray(), sampling: pluto.ChannelSample);
+
+plt.PlotSignalXY(spectrum.Keys.ToArray(), spectrum.Values.ToArray(), label: "Spectrum");
+plt.SaveFig("spectrum.png");
+
+var showPlt = new FormsPlotViewer(plt);
+
+
+showPlt.Refresh();
+showPlt.ShowDialog();
+
+pluto.Dispose();
+
+var a = 0;
 //Context _ctx = new Context("192.168.2.1");
 
 //QPSKModulator.Main();
@@ -15,53 +39,53 @@ var freq = 1e9;
 
 //SDR.SDR sdr = new SDR.SDR("192.168.2.1");
 
-ExampleFromAnalog.Main();
+//ExampleFromAnalog.Main();
 
 
-SDR.SDR sdr = new SDR.SDR("10.100.102.108");
-sdr.Connect();
+//SDR.SDR sdr = new SDR.SDR("10.100.102.108");
+//sdr.Connect();
 
-var spectrum = new Dictionary<double, double>();
-var plt = new Plot();
-
-
-sdr.SetAd9361Tx(freq);
-
-for (int j = 0; j < 1000; j++)
-{
-    var receivedData = sdr.SetAd9361Rx(freq, 20000000);
-
-    //convert byte[] receivedData to I and Q data
-    var I = new double[receivedData.Length / 2];
-    var Q = new double[receivedData.Length / 2];
-    for (int i = 0; i < receivedData.Length; i += 2)
-    {
-        if (i == 2046)
-        {
-            break;
-        }
-        I[i / 2] = BitConverter.ToInt16(receivedData, i);
-        Q[i / 2] = BitConverter.ToInt16(receivedData, i + 1);
-
-    }
-
-    plt.Clear();
-    spectrum = CalculateIQData.CreateSpectrum(I, Q, sampling: sdr._bufferSize);
+//var spectrum = new Dictionary<double, double>();
+//var plt = new Plot();
 
 
+//sdr.SetAd9361Tx(freq);
 
-    plt.PlotSignalXY(spectrum.Keys.ToArray(), spectrum.Values.ToArray(), label: "Spectrum");
-    plt.SaveFig("spectrum.png");
+//for (int j = 0; j < 1000; j++)
+//{
+//    var receivedData = sdr.SetAd9361Rx(freq, 20000000);
 
-    var showPlt = new FormsPlotViewer(plt);
+//    //convert byte[] receivedData to I and Q data
+//    var I = new double[receivedData.Length / 2];
+//    var Q = new double[receivedData.Length / 2];
+//    for (int i = 0; i < receivedData.Length; i += 2)
+//    {
+//        if (i == 2046)
+//        {
+//            break;
+//        }
+//        I[i / 2] = BitConverter.ToInt16(receivedData, i);
+//        Q[i / 2] = BitConverter.ToInt16(receivedData, i + 1);
 
+//    }
 
-    showPlt.Refresh();
-    showPlt.ShowDialog();
-    Thread.Sleep((int)2 * 1000);
-}
+//    plt.Clear();
+//    spectrum = CalculateIQData.CreateSpectrum(I, Q, sampling: sdr._bufferSize);
 
 
 
-sdr.Disconnect();
+//    plt.PlotSignalXY(spectrum.Keys.ToArray(), spectrum.Values.ToArray(), label: "Spectrum");
+//    plt.SaveFig("spectrum.png");
+
+//    var showPlt = new FormsPlotViewer(plt);
+
+
+//    showPlt.Refresh();
+//    showPlt.ShowDialog();
+//    Thread.Sleep((int)2 * 1000);
+//}
+
+
+
+//sdr.Disconnect();
 

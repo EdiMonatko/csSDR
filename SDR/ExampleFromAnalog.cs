@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using iio;
+﻿using iio;
 using ScottPlot;
+using System.Numerics;
 
 namespace SDR
 {
@@ -12,9 +8,9 @@ namespace SDR
     {
         public static void Main()
         {
-            //Context ctx = new Context("192.168.2.1");
+            Context ctx = new Context("192.168.2.1");
 
-            Context ctx = new Context("10.100.102.108");
+            //Context ctx = new Context("10.100.102.108");
 
             if (ctx == null)
             {
@@ -31,8 +27,8 @@ namespace SDR
             //string gain_ctrl_mode = "slow_attack";
             string gain_ctrl_mode = "manual";
 
-            string hw_gain = "-0";
-            string rx_gain = "0";
+            string hw_gain = "-70";
+            string rx_gain = "70";
 
 
             // get reference to devices
@@ -48,18 +44,20 @@ namespace SDR
             enable_rx(rx_adc);
 
             // Cyclic buffer to output perdiodic waveforms
-            int samples_per_channel = (int)Math.Pow(2, 14);
+            //int samples_per_channel = (int)Math.Pow(2, 14);
+            var samples_per_channel = 1_000_000;
 
             var tx_buf = new IOBuffer(tx_dac, (uint)samples_per_channel, true);
             var rx_buff = new IOBuffer(rx_adc, (uint)samples_per_channel, false);
 
-            var iqBytes = generate_sine(samples_per_channel, RXFS, 10e3);
+            //var iqBytes = generate_sine(samples_per_channel, RXFS, 10e3);
+            var iqBytes = GenerateQPSK(samples_per_channel, 1000);
             //byte[] iqBytes = generate_qpsk(samples_per_channel, RXFS, 1e9);
             //byte[] iqBytes = generate_qam4(samples_per_channel, RXFS, 10000);
             // Send data to TX buffer
             tx_buf.fill(iqBytes);
             tx_buf.push();
-            
+
             // read data on rx buffer
             (List<double> reals, List<double> imags) = read_rx_data(rx_buff, 10, samples_per_channel);
 
@@ -67,7 +65,7 @@ namespace SDR
             //plt.PlotSignal(reals.ToArray(), samples_per_channel);
             //plt.PlotSignal(imags.ToArray(), samples_per_channel);
 
-            var a = CalculateIQData.CreateSpectrum(reals.ToArray(), imags.ToArray(), sampling: samples_per_channel, mode:"ps");
+            var a = CalculateIQData.CreateSpectrum(reals.ToArray(), imags.ToArray(), sampling: samples_per_channel, mode:"psd");
 
             plt.PlotSignalXY(a.Keys.ToArray(), a.Values.ToArray(), label: "Spectrum");
 
@@ -222,6 +220,48 @@ namespace SDR
             }
 
             return waveform;
+        }
+
+        public static byte[] GenerateQPSK(int samplesPerSymbol, int numSymbols = 1000)
+        {
+            Random random = new Random();
+            Complex[] symbols = new Complex[numSymbols];
+            double[] xRadians = new double[numSymbols];
+
+            for (int i = 0; i < numSymbols; i++)
+            {
+                int xInt = random.Next(4); // Random integer between 0 and 3
+                double xDegrees = xInt * 360.0 / 4.0 + 45.0; // Map to 45, 135, 225, 315 degrees
+                xRadians[i] = xDegrees * Math.PI / 180.0; // Convert to radians
+                symbols[i] = new Complex(Math.Cos(xRadians[i]), Math.Sin(xRadians[i]));
+            }
+
+            // Upsample by repeating symbols and scale
+            Complex[] samples = new Complex[numSymbols * samplesPerSymbol];
+            for (int i = 0; i < numSymbols; i++)
+            {
+                for (int j = 0; j < samplesPerSymbol; j++)
+                {
+                    samples[i * samplesPerSymbol + j] = symbols[i];
+                }
+            }
+
+            // Scale the samples
+            double scale = Math.Pow(2, 14);
+            for (int i = 0; i < samples.Length; i++)
+            {
+                samples[i] *= scale;
+            }
+
+            // Convert complex samples to bytes (I/Q components)
+            byte[] byteSamples = new byte[samples.Length * 2];
+            for (int i = 0; i < samples.Length; i++)
+            {
+                byteSamples[i * 2] = (byte)(samples[i].Real);
+                byteSamples[i * 2 + 1] = (byte)(samples[i].Imaginary);
+            }
+
+            return byteSamples;
         }
 
 
