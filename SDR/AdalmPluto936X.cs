@@ -4,7 +4,7 @@ using System.Windows.Input;
 
 namespace SDR
 {
-    public class AdalmPluto936X
+    public class AdalmPluto936X : IAdalmPluto936X
     {
 
         #region Fields
@@ -65,14 +65,14 @@ namespace SDR
             #region Init with default values
 
             TxFrequency = 1e9;
-            TxSampleRate = 20e6;
-            TxBandwidth = 1e6;
-            TxGain = -70;
+            TxSampleRate = 3e6;
+            TxBandwidth = 5e6;
+            TxGain = -40;
 
             RxFrequency = 1e9;
-            RxSampleRate = 20e6;
-            RxBandwidth = 1e6;
-            RxGain = 70;
+            RxSampleRate = 3e6;
+            RxBandwidth = 5e6;
+            RxGain = 25;
 
             ChannelSample = 1e6;
             GainControlMode = "manual";
@@ -179,6 +179,40 @@ namespace SDR
                 return false;
             }
         }
+        public bool SetTxDds(double frequency0 = 1e5,
+            double frequency2 = 1e5,
+            double raw0 = 1, 
+            double raw2 = 1, 
+            double scale0 = 0.9,
+            double scale2 = 0.9,
+            double phase0 = 90000,
+            double phase2 = 0)
+        {
+            if (!isInitialized)
+                return false;
+
+            try
+            {
+                var dds0 = _deviceTx.find_channel("TX1_I_F1", true);
+                var dds2 = _deviceTx.find_channel("TX1_Q_F1", true);
+
+                dds0.find_attribute("raw").write(raw0);
+                dds0.find_attribute("frequency").write(frequency0);
+                dds0.find_attribute("scale").write(scale0);
+                dds0.find_attribute("phase").write(phase0);
+
+                dds2.find_attribute("raw").write(raw2);
+                dds2.find_attribute("frequency").write(frequency2);
+                dds2.find_attribute("scale").write(scale2);
+                dds2.find_attribute("phase").write(phase2);
+
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
         public bool EnableTx(byte[] iqBytes, bool cirtular = true)
         {
             if (!isInitialized)
@@ -199,12 +233,12 @@ namespace SDR
                 return false;
             }
         }
-        public bool PlutoTxOn(double signalFrequency = 1e3)
+        public bool PlutoTxOn(double signalFrequency = 1e3, double dds = 1e5)
         {
             if (!isInitialized)
                 return false;
 
-            var results = new List<(string,bool)>();
+            var results = new List<(string, bool)>();
             bool status = false;
 
             status = SetTxFrequency(TxFrequency);
@@ -219,7 +253,13 @@ namespace SDR
             status = SetTxGain(TxGain);
             results.Add((nameof(SetTxGain), status));
 
+            status = SetTxDds(frequency0: dds, frequency2: dds);
+            results.Add((nameof(SetTxDds), status));
+
             var iqBytes = generate_sine(ChannelSample, TxSampleRate, signalFrequency);
+
+            status = EnableRx();
+            results.Add((nameof(EnableRx), status));
 
             status = EnableTx(iqBytes);
             results.Add((nameof(EnableTx), status));
@@ -260,7 +300,6 @@ namespace SDR
             try
             {
                 _device.find_channel("RX_LO", true).find_attribute("frequency").write(RxFrequency);
-
                 return true;
             }
             catch (Exception)
@@ -315,7 +354,7 @@ namespace SDR
                 SetRx().find_attribute("gain_control_mode").write(gainControl);
 
                 if (string.Equals(gainControl, "manual"))
-                {                    
+                {
                     SetRx().find_attribute("hardwaregain").write(RxGain);
                 }
 
@@ -351,7 +390,7 @@ namespace SDR
             }
             catch (Exception)
             {
-                return (reals, imags);                
+                return (reals, imags);
             }
 
             short[] data_casted = new short[data.Length / 2];
@@ -386,7 +425,7 @@ namespace SDR
 
             status = EnableRx();
             results.Add((nameof(EnableRx), status));
-                        
+
             foreach (var item in results)
             {
                 if (item.Item2 is false)
@@ -423,7 +462,7 @@ namespace SDR
 
             double[] i = t.Select(x => (Math.Sin(2 * Math.PI * x * fc) * 1)).ToArray();
             double[] q = t.Select(x => (Math.Cos(2 * Math.PI * x * fc) * 1)).ToArray();
-            
+
             int[] iq = new int[i.Length + q.Length];
             for (int j = 0; j < i.Length; j++)
             {

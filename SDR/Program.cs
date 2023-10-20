@@ -2,29 +2,38 @@
 using SDR;
 using ScottPlot;
 using ScottPlot.WinForms;
+using System.Windows.Forms;
 
 Console.WriteLine("Hello, World!");
 var status = false;
 var pluto = new AdalmPluto936X("192.168.2.1");
 status = pluto.Init();
+pluto.SetTxFrequency(2e9);
+pluto.SetRxFrequency(2e9);
+//pluto.SetTxFrequency(2e9);
+//pluto.SetTxFrequency(3e9);
+//pluto.SetTxGain(0);
+//pluto.SetTxGain(-10);
+//pluto.SetTxGain(-20);
+pluto.SetTxGain(-25);
+//pluto.SetTxGain(-20);
 pluto.ChannelSample = 1e6;
-pluto.TxGain = -70;
-pluto.GainControlMode = "slow_attack";
-pluto.RxGain = 70;
-status = pluto.PlutoTxOn();
+//pluto.TxGain = -20;
+pluto.GainControlMode = "manual";
+pluto.RxGain = 40;
+status = pluto.PlutoTxOn(dds: 5e5);
+
+//Create Rx Thread
+var b = pluto.SetRxGain(50);
 var (I, Q) = pluto.PlutoRxOn();
 
-var plt = new Plot();
-var spectrum = CalculateIQData.CreateSpectrum(I.ToArray(), Q.ToArray(), sampling: pluto.ChannelSample);
 
-plt.PlotSignalXY(spectrum.Keys.ToArray(), spectrum.Values.ToArray(), label: "Spectrum");
-plt.SaveFig("spectrum.png");
+//Call PlutoRx as new thread
 
-var showPlt = new FormsPlotViewer(plt);
+Task t = new Task(() => PlutoRx.PlutoRxClass(pluto));
+t.Start();
 
-
-showPlt.Refresh();
-showPlt.ShowDialog();
+Thread.Sleep(60 * 1000);
 
 pluto.Dispose();
 
