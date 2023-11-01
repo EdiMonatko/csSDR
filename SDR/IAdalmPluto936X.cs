@@ -17,9 +17,16 @@
         bool EnableRx();
         bool EnableTx(byte[] iqBytes, bool cirtular = true);
         bool Init();
-        (List<double> reals, List<double> imags) PlutoRxOn();
-        bool PlutoTxOn(double signalFrequency, double dds);
-        (List<double> reals, List<double> imags) ReadRx(double bufferLength, bool isCircular = false);
+        (double[] reals, double[] imags) PlutoRxOn();
+        bool PlutoTxOn(double signalFrequency = 1e3,
+            double dds = 1e5,
+            double raw0 = 1,
+            double raw2 = 1,
+            double scale0 = 1,
+            double scale2 = 1,
+            double phase0 = 90e3,
+            double phase2 = 0);
+        (double[] reals, double[] imags) ReadRx(double bufferLength, bool isCircular = false);
         bool SetRxBandwidth(double bandwidth);
         bool SetRxFrequency(double frequency);
         bool SetRxGain(double gain, string gainControl = "manual");

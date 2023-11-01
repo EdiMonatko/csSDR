@@ -9,22 +9,29 @@ var status = false;
 var pluto = new AdalmPluto936X("192.168.2.1");
 status = pluto.Init();
 pluto.SetTxFrequency(2e9);
-pluto.SetRxFrequency(2e9);
+//pluto.SetRxFrequency(2e9);
 //pluto.SetTxFrequency(2e9);
 //pluto.SetTxFrequency(3e9);
 //pluto.SetTxGain(0);
 //pluto.SetTxGain(-10);
 //pluto.SetTxGain(-20);
-pluto.SetTxGain(-25);
+pluto.SetTxGain(-20);
 //pluto.SetTxGain(-20);
 pluto.ChannelSample = 1e6;
 //pluto.TxGain = -20;
 pluto.GainControlMode = "manual";
-pluto.RxGain = 40;
-status = pluto.PlutoTxOn(dds: 5e5);
+pluto.RxGain = 30;
+status = pluto.PlutoTxOn(dds: 3e5);
+
+//for (int i = 0; i < 1000; i+=10)
+//{
+//    //pluto.SetTxDds(frequency0: 3e5, frequency2:3e5, phase2: i, phase0:i);
+//    Console.WriteLine( $"phase0:{i}");
+//    Thread.Sleep(1 * 1000);
+//}
 
 //Create Rx Thread
-var b = pluto.SetRxGain(50);
+var b = pluto.SetRxGain(20);
 var (I, Q) = pluto.PlutoRxOn();
 
 
@@ -33,7 +40,12 @@ var (I, Q) = pluto.PlutoRxOn();
 Task t = new Task(() => PlutoRx.PlutoRxClass(pluto));
 t.Start();
 
-Thread.Sleep(60 * 1000);
+status = pluto.PlutoTxOn(dds: 3e5);
+var iqBytes = pluto.generate_sine(pluto.ChannelSample,
+    pluto.TxSampleRate, 
+    3e6);
+
+//Thread.Sleep(60 * 1000);
 
 pluto.Dispose();
 

@@ -1,5 +1,7 @@
 ﻿using iio;
+using ScottPlot.Drawing.Colormaps;
 using System.Data.SqlTypes;
+using System.Net;
 using System.Windows.Input;
 
 namespace SDR
@@ -15,6 +17,7 @@ namespace SDR
         private Device _deviceTx = null!;
         private Device _deviceRx = null!;
 
+        public string _ipAddress { get; private set; }
         public bool isInitialized = false;
 
         #endregion
@@ -33,35 +36,13 @@ namespace SDR
 
         public double ChannelSample { get; set; }
         public string GainControlMode { get; set; }
-
+        
         #endregion
 
         #region Constructors
 
         public AdalmPluto936X(string ipAddress)
         {
-            Context ctx = new Context(ipAddress);
-
-            if (ctx is not null)
-            {
-                _context = ctx;
-                isInitialized = true;
-
-                _device = ctx.find_device("ad9361-phy");
-                _deviceTx = ctx.find_device("cf-ad9361-dds-core-lpc");
-                _deviceRx = ctx.find_device("cf-ad9361-lpc");
-            }
-        }
-
-        #endregion
-
-        #region Methods
-
-        public bool Init()
-        {
-            if (!isInitialized)
-                return false;
-
             #region Init with default values
 
             TxFrequency = 1e9;
@@ -78,6 +59,27 @@ namespace SDR
             GainControlMode = "manual";
 
             #endregion
+            _ipAddress = ipAddress;
+        }
+
+        #endregion
+
+        #region Methods
+
+        public bool Init()
+        {
+            Context ctx = new Context(_ipAddress);
+
+            if (ctx is not null)
+            {
+                _context = ctx;
+                isInitialized = true;
+
+                _device = ctx.find_device("ad9361-phy");
+                _deviceTx = ctx.find_device("cf-ad9361-dds-core-lpc");
+                _deviceRx = ctx.find_device("cf-ad9361-lpc");
+            }
+
 
             return isInitialized;
         }
@@ -183,9 +185,9 @@ namespace SDR
             double frequency2 = 1e5,
             double raw0 = 1, 
             double raw2 = 1, 
-            double scale0 = 0.9,
-            double scale2 = 0.9,
-            double phase0 = 90000,
+            double scale0 = 1,
+            double scale2 = 1,
+            double phase0 = 90e3,
             double phase2 = 0)
         {
             if (!isInitialized)
@@ -233,7 +235,14 @@ namespace SDR
                 return false;
             }
         }
-        public bool PlutoTxOn(double signalFrequency = 1e3, double dds = 1e5)
+        public bool PlutoTxOn(double signalFrequency = 1e5, 
+            double dds = 1e5,
+            double raw0 = 1,
+            double raw2 = 1,
+            double scale0 = 1,
+            double scale2 = 1,
+            double phase0 = 90e3,
+            double phase2 = 0)
         {
             if (!isInitialized)
                 return false;
@@ -253,13 +262,21 @@ namespace SDR
             status = SetTxGain(TxGain);
             results.Add((nameof(SetTxGain), status));
 
-            status = SetTxDds(frequency0: dds, frequency2: dds);
+            status = SetTxDds(frequency0: dds,
+                frequency2: dds,
+                raw0,
+                raw2,
+                scale0,
+                scale2,
+                phase0,
+                phase2
+                );
             results.Add((nameof(SetTxDds), status));
 
             var iqBytes = generate_sine(ChannelSample, TxSampleRate, signalFrequency);
 
-            status = EnableRx();
-            results.Add((nameof(EnableRx), status));
+            //status = EnableRx();
+            //results.Add((nameof(EnableRx), status));
 
             status = EnableTx(iqBytes);
             results.Add((nameof(EnableTx), status));
@@ -375,7 +392,7 @@ namespace SDR
 
             return true;
         }
-        public (List<double> reals, List<double> imags) ReadRx(double bufferLength, bool isCircular = false)
+        public (double[] reals, double[] imags) ReadRx(double bufferLength, bool isCircular = false)
         {
             List<double> reals = new();
             List<double> imags = new();
@@ -390,7 +407,7 @@ namespace SDR
             }
             catch (Exception)
             {
-                return (reals, imags);
+                return (reals.ToArray(), imags.ToArray());
             }
 
             short[] data_casted = new short[data.Length / 2];
@@ -401,9 +418,9 @@ namespace SDR
                 imags.Add(data_casted[idx + 1]);
             }
 
-            return (reals, imags);
+            return (reals.ToArray(), imags.ToArray());
         }
-        public (List<double> reals, List<double> imags) PlutoRxOn()
+        public (double[] reals, double[] imags) PlutoRxOn()
         {
             //if (!isInitialized)
             //    return false;
@@ -430,7 +447,7 @@ namespace SDR
             {
                 if (item.Item2 is false)
                 {
-                    return (new List<double>(), new List<double>());
+                    return (new double[0], new double[0]);
                 }
             }
 
@@ -455,13 +472,13 @@ namespace SDR
 
         #region Helpers
 
-        static byte[] generate_sine(double samples_per_channel, double rx_fs, double fc)
+        public byte[] generate_sine(double samples_per_channel, double rx_fs, double fc)
         {
             double ts = 1.0 / rx_fs;
             double[] t = Enumerable.Range(0, Convert.ToInt32(samples_per_channel)).Select(i => i * ts).ToArray();
 
-            double[] i = t.Select(x => (Math.Sin(2 * Math.PI * x * fc) * 1)).ToArray();
-            double[] q = t.Select(x => (Math.Cos(2 * Math.PI * x * fc) * 1)).ToArray();
+            double[] i = t.Select(x => (Math.Sin(2 * Math.PI * x * fc) * Math.Pow(2,14))).ToArray();
+            double[] q = t.Select(x => (Math.Cos(2 * Math.PI * x * fc) * Math.Pow(2,14))).ToArray();
 
             int[] iq = new int[i.Length + q.Length];
             for (int j = 0; j < i.Length; j++)

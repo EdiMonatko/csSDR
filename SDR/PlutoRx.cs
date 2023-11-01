@@ -14,24 +14,33 @@ namespace SDR
         {
             var plt = new Plot();
             var showPlt = new FormsPlotViewer(plt);
-
+            pluto.PlutoRxOn();
             // Create a background worker thread for updating the plot
             var plotThread = new Thread(() =>
             {
                 while (pluto.isInitialized)
                 {
-                    var (I, Q) = pluto.PlutoRxOn();
+                    var I = new double[250000];
+                    var Q = new double[250000];
+                    for (int i = 0; i < 10; i ++)
+                    {
+                        (I, Q) = pluto.ReadRx(pluto.ChannelSample, isCircular: true);
+
+
+                    }
+
                     var spectrum = CalculateIQData.CreateSpectrum(I.ToArray(), Q.ToArray(), sampling: pluto.ChannelSample);
 
                     var (peakFreq, peakAmpltitude) = CalculateIQData.PeakSearch(spectrum);
 
-                    //write peakFreq and peakAmpltitude to console with 3 decimal places
-                    Console.WriteLine("Peak Frequency: {0:F3}Hz", peakFreq);
-                    Console.WriteLine("Peak Amplitude: {0:F3}dBm", peakAmpltitude);
 
                     // Plot the new data on the UI thread
                     if (spectrum.Count > 0)
                     {
+                        //write peakFreq and peakAmpltitude to console with 3 decimal places
+                        Console.WriteLine("Peak Frequency: {0:F3}Hz", peakFreq);
+                        Console.WriteLine("Peak Amplitude: {0:F3}dBm", peakAmpltitude);
+
                         showPlt.Invoke((MethodInvoker)delegate
                         {
                             plt.Clear();
@@ -44,7 +53,7 @@ namespace SDR
                     }
 
 
-                    Thread.Sleep((int)(3 * 1000));
+                    Thread.Sleep((int)(0.5 * 1000));
                 }
             });
 
