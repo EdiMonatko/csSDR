@@ -1,8 +1,5 @@
 ﻿using iio;
-using ScottPlot.Drawing.Colormaps;
-using System.Data.SqlTypes;
-using System.Net;
-using System.Windows.Input;
+using SDR.Contracts;
 
 namespace SDR
 {
@@ -19,6 +16,7 @@ namespace SDR
 
         public string _ipAddress { get; private set; }
         public bool isInitialized = false;
+
 
         #endregion
 
@@ -493,6 +491,7 @@ namespace SDR
 
             return iqBytes;
         }
+
 
         #endregion
 

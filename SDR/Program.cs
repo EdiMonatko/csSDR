@@ -5,6 +5,9 @@ using ScottPlot.WinForms;
 using System.Windows.Forms;
 
 Console.WriteLine("Hello, World!");
+
+ExampleFromAnalog.Main();
+
 var status = false;
 var pluto = new AdalmPluto936X("192.168.2.1");
 status = pluto.Init();
@@ -37,8 +40,11 @@ var (I, Q) = pluto.PlutoRxOn();
 
 //Call PlutoRx as new thread
 
-Task t = new Task(() => PlutoRx.PlutoRxClass(pluto));
-t.Start();
+//Task t = new Task(() => PlutoRx.PlutoRxClass(pluto));
+//t.Start();
+
+PlutoRx.PlutoRxClass(pluto);
+
 
 status = pluto.PlutoTxOn(dds: 3e5);
 var iqBytes = pluto.generate_sine(pluto.ChannelSample,

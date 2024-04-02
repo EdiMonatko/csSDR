@@ -1,5 +1,4 @@
 ﻿using iio;
-using IIOCSharp;
 using System.Numerics;
 
 namespace SDR
@@ -123,14 +122,14 @@ namespace SDR
             //recieve data
             var buf = new IOBuffer(_rxDevice, _bufferSize, true);
 
-            if (buf.buf is 0)
-            {
-                Disconnect();
-            }
-            else
-            {
-                buf.refill();
-            }
+            //if (buf.buf is 0)
+            //{
+            //    Disconnect();
+            //}
+            //else
+            //{
+            //    buf.refill();
+            //}
 
             byte[] test = new byte[_bufferSize];
 
@@ -189,17 +188,17 @@ namespace SDR
             PrintAttrs();
 
             var buf = new IOBuffer(_txDevice, _bufferSize, true);
-            if (buf.buf is 0)
-            {
-                Disconnect();
-            }
-            else
-            {
+            //if (buf.buf is 0)
+            //{
+            //    Disconnect();
+            //}
+            //else
+            //{
                 buf.fill(complexData);
 
 
                 buf.push(_bufferSize);
-            }
+            //}
         }
 
         public void SetAd936xTx()

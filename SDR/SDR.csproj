@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -8,9 +8,21 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <AvaloniaXaml Remove="csharp\**" />
+    <AvaloniaXaml Remove="include\**" />
+    <AvaloniaXaml Remove="Windows-VS-2022-x64\**" />
+    <Compile Remove="csharp\**" />
+    <Compile Remove="include\**" />
     <Compile Remove="libiio\**" />
+    <Compile Remove="Windows-VS-2022-x64\**" />
+    <EmbeddedResource Remove="csharp\**" />
+    <EmbeddedResource Remove="include\**" />
     <EmbeddedResource Remove="libiio\**" />
+    <EmbeddedResource Remove="Windows-VS-2022-x64\**" />
+    <None Remove="csharp\**" />
+    <None Remove="include\**" />
     <None Remove="libiio\**" />
+    <None Remove="Windows-VS-2022-x64\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -19,6 +31,18 @@
     <PackageReference Include="ScottPlot.Avalonia" Version="4.1.68" />
     <PackageReference Include="ScottPlot.WinForms" Version="4.1.68" />
     <PackageReference Include="ScottPlot.WPF" Version="4.1.68" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="libiio-sharp">
+      <HintPath>Windows-VS-2022-x64\libiio-sharp.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="msvcp140.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

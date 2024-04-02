@@ -10,6 +10,8 @@ namespace SDR
         {
             Context ctx = new Context("192.168.2.1");
 
+            Console.WriteLine($"name: {ctx.name}, version: {ctx.library_version.minor},backend version:{ctx.backend_version.minor}");
+
             //Context ctx = new Context("10.100.102.108");
 
             if (ctx == null)
@@ -50,8 +52,10 @@ namespace SDR
             var tx_buf = new IOBuffer(tx_dac, (uint)samples_per_channel, true);
             var rx_buff = new IOBuffer(rx_adc, (uint)samples_per_channel, false);
 
-            //var iqBytes = generate_sine(samples_per_channel, RXFS, 10e3);
-            var iqBytes = GenerateQPSK(samples_per_channel, 1000);
+            SetTxDds(rx_adc, 1e6);
+
+            var iqBytes = generate_sine(samples_per_channel, RXFS, 10e3);
+            //var iqBytes = GenerateQPSK(samples_per_channel, 1000);
             //byte[] iqBytes = generate_qpsk(samples_per_channel, RXFS, 1e9);
             //byte[] iqBytes = generate_qam4(samples_per_channel, RXFS, 10000);
             // Send data to TX buffer
@@ -60,6 +64,10 @@ namespace SDR
 
             // read data on rx buffer
             (List<double> reals, List<double> imags) = read_rx_data(rx_buff, 10, samples_per_channel);
+
+
+            tx_buf.Dispose();
+            rx_buff.Dispose();
 
             var plt = new Plot(1920, 1080);
             //plt.PlotSignal(reals.ToArray(), samples_per_channel);
@@ -76,6 +84,8 @@ namespace SDR
 
             showPlt.Refresh();
             showPlt.ShowDialog();
+
+            ctx.Dispose();
         }
 
         static void rx_config(Device device, string rx_lo, string rx_bw, string rx_fs, string gain_ctrl_mode, string hardwareGain)
@@ -290,10 +300,10 @@ namespace SDR
         static void SetTxDds(Device tx_adc, double freq)
         {
             //tx_adc.find_buffer_attribute("altvoltage0").write($"{freq.ToString()}");
-            tx_adc.find_buffer_attribute("frequency").write($"{freq.ToString()}");
+            tx_adc.find_buffer_attribute("frequency").write($"{freq}");
 
-            tx_adc.find_channel("altvoltage0", true).find_attribute("frequency").write($"{freq.ToString()}");
-            tx_adc.find_channel("altvoltage1", true).find_attribute("frequency").write($"{freq.ToString()}");
+            tx_adc.find_channel("altvoltage0", true).find_attribute("frequency").write($"{freq}");
+            tx_adc.find_channel("altvoltage1", true).find_attribute("frequency").write($"{freq}");
         }
     }
 }
